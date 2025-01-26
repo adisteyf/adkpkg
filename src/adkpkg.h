@@ -66,8 +66,9 @@ char  *HOME;
 short  HOME_LEN;
 char  *mirrorName;
 bool   isOverSystem;
-bool   askDownload = true;
+bool   askDownload   = true;
 bool   forceDownload = false;
+bool   isADKCFG      = false;
 
 
 /*************************************************************

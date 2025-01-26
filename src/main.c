@@ -168,8 +168,10 @@ char* readFile(const char* filename)
     if (file == NULL) {
         logerr("Can't open file.");
         printf("File: '%s'\n", filename);
-        log("Aborting...");
-        exit(EXIT_FAILURE);
+        //log("Aborting...");
+        //exit(EXIT_FAILURE);
+        isADKCFG = false;
+        return "unknown";
     }
 
     while (fgets(line, sizeof(line), file)) {
@@ -484,23 +486,44 @@ bool getPkg(char *name)
     char *ADKCFG = readFile(adkcfg_path);
     free(adkcfg_path);
 
-    int cfg_len = 0;
-    EnvVar *ADKCFG_VARS = parseEnv(ADKCFG, &cfg_len);
-    printf("ADKCFG: '%s'\n", ADKCFG);
-    free(ADKCFG);
-
     char *type = 0x00;
-    for (int i=0; i<cfg_len; ++i) {
-        printf("current key: %s\n", ADKCFG_VARS[i].key);
-        if (0==strcmp(ADKCFG_VARS[i].key, "TYPE")) // TODO: добавить больше параметров для adkcfg
-            type = ADKCFG_VARS[i].value;
+    if (isADKCFG) {
+        int cfg_len = 0;
+        EnvVar *ADKCFG_VARS = parseEnv(ADKCFG, &cfg_len);
+        printf("ADKCFG: '%s'\n", ADKCFG);
+        free(ADKCFG);
+
+        for (int i=0; i<cfg_len; ++i) {
+            printf("current key: %s\n", ADKCFG_VARS[i].key);
+            if (0==strcmp(ADKCFG_VARS[i].key, "TYPE")) // TODO: добавить больше параметров для adkcfg
+                type = ADKCFG_VARS[i].value;
+        }
+
+        if (!type) {
+            logerr("Type is missing in package.");
+            printf("Type: '%s'\n", type);
+            log("Aborting...");
+            exit(1);
+        }
     }
 
-    if (!type) {
-        logerr("Type is missing in package.");
-        printf("Type: '%s'\n", type);
-        log("Aborting...");
-        exit(1);
+    else {
+        putchar('\n');
+        printf("No ADKCFG file (write the type): ");
+        logarr;
+
+        size_t len_type = 0;
+
+        if (getline(&type, &len_type, stdin)<0) {
+            logerr("Can't read the answer");
+            log("Aborting...");
+            exit(1);
+        }
+
+        for (int i=0; i<len_type; ++i) {
+            type[i]=tolower(type[i]);
+            if (type[i]=='\n') { type[i]=0; }
+        }
     }
 
     pthread_t cp_load;
